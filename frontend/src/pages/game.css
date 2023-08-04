@@ -1,0 +1,48 @@
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.container {
+    display: inline-block;
+    padding: 15px;
+    border: 5px solid rgb(110, 106, 227);
+    background-color: rgb(122, 114, 239);
+    border-radius: 50px;
+}
+
+.board {
+    display: grid;
+    grid-template-columns: repeat(7, 80px);
+    grid-template-rows: repeat(6, 80px);
+    /* grid-gap: 10px; */
+}
+
+.cell {
+    width: 70px;
+    height: 70px;
+    /* margin: 20px; */
+    border: 5px solid rgb(110, 106, 227);
+    background-color: #181a1b;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    cursor: pointer;
+    border-radius: 100%;
+}
+
+.cell:hover {
+    background-color: #454a4c;
+}
+
+.cell.red-piece {
+    background-color: rgba(255, 34, 34, 0.852);
+}
+
+.cell.yellow-piece {
+    background-color: rgba(255, 245, 46, 0.852);
+}
