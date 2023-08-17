@@ -4,7 +4,7 @@ from flask_socketio import emit
 
 
 class Room:
-    def __init__(self, roomID, playerOne=None, playerTwo=None, isRed=True):
+    def __init__(self, roomID, playerOne=None, playerTwo=None, isRed=True, available=True):
         self.roomID = roomID.upper()
         self.users = {"first": playerOne, "second": playerTwo}
         self.isRed = isRed
@@ -12,6 +12,8 @@ class Room:
         self.timeCreated = datetime.datetime.now()
         self.current_player = self.users["first"]
         self.end = False
+        self.spectators = []
+        self.available = available
 
     def switch_player(self):
         if self.current_player == self.users["first"]:
@@ -73,4 +75,3 @@ class Room:
                          room=self.roomID)
 
                 self.switch_player()
-                print(self.current_player.name)

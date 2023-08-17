@@ -8,8 +8,10 @@ class UserManager:
     def add_user(self, newUser):
         if newUser.id in self.all_users:
             print("Username already exists")
+            return None
         else:
             self.all_users[str(newUser.id)] = newUser
+            return newUser.name
 
     def remove_user(self, removeUser):
         removeUser = removeUser.upper()
