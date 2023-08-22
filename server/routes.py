@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify
 
-from .manager import userManager, roomManager, add_room_user
+from .manager import userManager, roomManager
 
 
 main = Blueprint("main", __name__)

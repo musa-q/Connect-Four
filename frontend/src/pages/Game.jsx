@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Modal } from 'antd';
+import { Button, Modal, Space, Spin } from 'antd';
+import { LoadingOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from "react-router-dom";
 
 import './game.css';
@@ -8,12 +9,14 @@ const Game = ({ socket }) => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const [currentPlayer, setCurrentPlayer] = useState('red');
     const [currentTurn, setCurrentTurn] = useState(null);
     const [winner, setWinner] = useState(null);
     const [opponentsName, setOpponentsName] = useState(null);
     const [turnMessage, setTurnMessage] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
+    const [secondPlayerJoined, setSecondPlayerJoined] = useState(false);
+    const [isRed, setIsRed] = useState(null);
+
 
 
     const [board, setBoard] = useState(() => {
@@ -37,18 +40,14 @@ const Game = ({ socket }) => {
 
     useEffect(() => {
         if (socket) {
-            // socket.on('enter_page_response', (data) => {
-            //     console.log({ "stay": data })
-            //     if (!data) {
-            //         navigate(`/`);
-            //     }
-            // });
+            socket.emit('client_joined');
 
             socket.on('all_players_join', () => {
                 if (currentTurn === null) {
                     socket.emit("get_current_players_name");
                     socket.emit("get_start_turn");
                 }
+                setSecondPlayerJoined(true);
             });
 
             socket.on('response_current_players_name', (data) => {
@@ -59,9 +58,15 @@ const Game = ({ socket }) => {
                 setCurrentTurn(data["curr"]);
                 if (data["curr"]) {
                     setCurrentTurn("your");
+                    if (isRed === null) {
+                        setIsRed(true);
+                    }
                 }
                 else {
                     setCurrentTurn(opponentsName);
+                    if (isRed === null) {
+                        setIsRed(false);
+                    }
                 }
             });
 
@@ -97,7 +102,7 @@ const Game = ({ socket }) => {
         } else {
             navigate(`/`);
         }
-    }, [currentTurn, socket, board, winner, currentPlayer, modalOpen]);
+    }, [currentTurn, socket, board, winner, modalOpen, secondPlayerJoined, isRed]);
 
 
     const handleWinSubmit = () => {
@@ -143,24 +148,26 @@ const Game = ({ socket }) => {
 
     const renderBoard = () => {
         return (
-            <div className="board">
-                {board.map((col, colIndex) => (
-                    <div key={colIndex} className="col">
-                        {col.map((cell, rowIndex) => (
-                            <div
-                                key={rowIndex}
-                                className={`cell ${cell === 'red' ? 'red-piece' : (cell === 'yellow' ? 'yellow-piece' : '')}`}
-                                data-row={rowIndex}
-                                data-col={colIndex}
-                                onClick={() => {
-                                    if (currentTurn != null) {
-                                        handleMove(colIndex);
-                                    }
-                                }}
-                            />
-                        ))}
-                    </div>
-                ))}
+            <div className='container'>
+                <div className="board">
+                    {board.map((col, colIndex) => (
+                        <div key={colIndex} className="col">
+                            {col.map((cell, rowIndex) => (
+                                <div
+                                    key={rowIndex}
+                                    className={`cell ${cell === 'red' ? 'red-piece' : (cell === 'yellow' ? 'yellow-piece' : '')}`}
+                                    data-row={rowIndex}
+                                    data-col={colIndex}
+                                    onClick={() => {
+                                        if (currentTurn === "your") {
+                                            handleMove(colIndex);
+                                        }
+                                    }}
+                                />
+                            ))}
+                        </div>
+                    ))}
+                </div>
             </div>
         );
     };
@@ -168,13 +175,95 @@ const Game = ({ socket }) => {
 
     return (
         <>
-            <h1>Connect Four</h1>
             {renderPopUp()}
-            {winner && <p>WINNER: {winner}</p>}
-            {turnMessage && !winner && <p>It is {turnMessage} turn</p>}
-            <div className='container'>
-                <div className="game-container">
-                    {renderBoard()}
+            {console.log(currentTurn)}
+            <div className="page-row">
+                <div className="page-column left">
+                    <div className='user-box'>
+                        {currentTurn != null ? (
+                            <>
+                                <div className='content-row top' style={{ padding: "20px" }}>
+                                    {isRed ? (<p>YOU</p>) : (opponentsName)}
+                                </div>
+                                <div className='content-row bottom'>
+                                    {isRed ? (
+                                        <>
+                                            {currentTurn === "your" ? (
+                                                <div className='turn-icon' style={{ backgroundColor: "rgba(255, 34, 34, 0.852)" }} />
+                                            ) : (
+                                                <div className='turn-icon' style={{ backgroundColor: "rgba(255, 34, 34, 0.2)" }} />
+                                            )}
+                                        </>
+                                    ) : (
+                                        <>
+                                            {currentTurn === "your" ? (
+                                                <div className='turn-icon' style={{ backgroundColor: "rgba(255, 34, 34, 0.2)" }} />
+                                            ) : (
+                                                <div className='turn-icon' style={{ backgroundColor: "rgba(255, 34, 34, 0.852)" }} />
+                                            )}
+                                        </>
+                                    )}
+
+                                </div>
+                            </>
+                        ) : (
+                            <div />
+                        )}
+
+                    </div>
+                </div>
+                <div className="page-column middle">
+                    <div className='content-row top'>
+                        <div className='gamecode'>Connect Four</div>
+                    </div>
+                    <div className='content-row bottom'>
+                        <div className='mainscreen'></div>
+                        {secondPlayerJoined ?
+                            (
+                                renderBoard()
+                            ) : (
+                                <div className="loading-icon">
+                                    <Space direction='vertical' >
+                                        <Spin tip="Searching for a game" size="large" >
+                                            <div className='loading-content' />
+                                        </Spin>
+                                    </Space>
+                                </div>
+                            )}
+                    </div>
+                </div>
+                <div className="page-column right">
+                    <div className='user-box'>
+                        {currentTurn != null ? (
+                            <>
+                                <div className='content-row top' style={{ padding: "20px" }}>
+                                    {!isRed ? (<p>YOU</p>) : (opponentsName)}
+                                </div>
+                                <div className='content-row bottom'>
+                                    {!isRed ? (
+                                        <>
+                                            {currentTurn === "your" ? (
+                                                <div className='turn-icon' style={{ backgroundColor: "rgba(255, 245, 46, 0.852)" }} />
+                                            ) : (
+                                                <div className='turn-icon' style={{ backgroundColor: "rgba(255, 245, 46, 0.2)" }} />
+                                            )}
+                                        </>
+                                    ) : (
+                                        <>
+                                            {currentTurn === "your" ? (
+                                                <div className='turn-icon' style={{ backgroundColor: "rgba(255, 245, 46, 0.2)" }} />
+                                            ) : (
+                                                <div className='turn-icon' style={{ backgroundColor: "rgba(255, 245, 46, 0.852)" }} />
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+                            </>
+                        ) : (
+                            <div />
+                        )}
+
+                    </div>
                 </div>
             </div>
         </>

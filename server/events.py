@@ -2,7 +2,7 @@ from flask import Flask, request
 from flask_socketio import emit, join_room, leave_room, close_room
 
 from .extensions import socketio
-from .manager import userManager, roomManager, add_room_user
+from .manager import userManager, roomManager
 from .user import User
 
 
@@ -78,9 +78,17 @@ def handle_room_join():
     (created, roomID) = roomManager.online_game(user)
     join_room(roomID)
     emit("add_room_response", {"response": "User ADDED.", "gameID": roomID, "error": False}, room=roomID)
-    if not created:
-        emit("all_players_join", room=roomID)
+    # if not created:
+    #     emit("all_players_join", room=roomID)
 
+
+# gets room, if both clients joined then emits all_players_join
+@socketio.on("client_joined")
+def client_joined():
+    user = userManager.get_user(request.sid)
+    current_room = user.room
+    if current_room.users["second"] != None:
+        emit("all_players_join", room=current_room.roomID)
 
 @socketio.on("get_start_turn")
 def handle_user_join():
